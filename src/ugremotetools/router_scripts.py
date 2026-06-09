@@ -93,7 +93,7 @@ fi
 
 
 def install_tailscale_script(auth_key: str = "") -> str:
-    return f'''
+    return rf'''
 set -u
 AUTH_KEY={q(auth_key)}
 
@@ -188,7 +188,7 @@ tailscale status 2>/dev/null || true
 '''
 
 def dns_script(lan_ip: str, dns1: str, dns2: str, dns3: str) -> str:
-    return f'''
+    return rf'''
 set -u
 LAN_IP={q(lan_ip)}
 DNS1={q(dns1)}

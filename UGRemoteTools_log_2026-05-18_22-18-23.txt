@@ -1,0 +1,15 @@
+
+================================================================================
+Новый запуск: 2026-05-18 22:18:23
+================================================================================
+
+=== Проверить SSH ===
+connected
+Linux OpenWrt 6.6.73 #0 Mon Feb  3 23:09:37 2025 mips GNU/Linux
+DISTRIB_ID='OpenWrt'
+DISTRIB_RELEASE='24.10.0'
+DISTRIB_REVISION='r28427-6df0e3d02a'
+DISTRIB_TARGET='ramips/mt76x8'
+DISTRIB_ARCH='mipsel_24kc'
+DISTRIB_DESCRIPTION='OpenWrt 24.10.0 r28427-6df0e3d02a'
+DISTRIB_TAINTS=''

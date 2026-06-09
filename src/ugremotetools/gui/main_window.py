@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 from pathlib import Path
+from datetime import datetime
 from typing import Callable, Dict, Any, Optional
 
 from PySide6.QtCore import QObject, Signal, Qt
@@ -53,23 +54,86 @@ class LogDialog(QDialog):
     def __init__(self, parent: "MainWindow"):
         super().__init__(parent)
         self.setWindowTitle("Логи выполнения")
-        self.resize(980, 640)
+        self.resize(980, 680)
+        self.log_file_path: Optional[Path] = None
+
         layout = QVBoxLayout(self)
+
         heading = QLabel("Логи выполнения")
         heading.setFont(QFont("Segoe UI", 16, QFont.Bold))
         heading.setAlignment(Qt.AlignCenter)
         layout.addWidget(heading)
+
+        file_box = QGroupBox("Запись логов в файл")
+        file_layout = QHBoxLayout(file_box)
+
+        self.save_to_file = QCheckBox("Записывать логи в файл")
+        self.save_to_file.setChecked(False)
+
+        self.file_path_label = QLabel("Файл не выбран")
+        self.file_path_label.setStyleSheet("color: #999;")
+
+        self.choose_file_btn = QPushButton("Выбрать файл")
+        self.choose_file_btn.clicked.connect(self.choose_log_file)
+
+        file_layout.addWidget(self.save_to_file)
+        file_layout.addWidget(self.file_path_label, 1)
+        file_layout.addWidget(self.choose_file_btn)
+        layout.addWidget(file_box)
+
         self.text = QPlainTextEdit()
         self.text.setReadOnly(True)
         self.text.setPlaceholderText("Здесь будет лог выполнения...")
         layout.addWidget(self.text, 1)
 
+    def choose_log_file(self) -> None:
+        default_name = f"UGRemoteTools_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Куда сохранить лог",
+            default_name,
+            "Text files (*.txt);;All files (*.*)",
+        )
+        if path:
+            self.log_file_path = Path(path)
+            self.file_path_label.setText(str(self.log_file_path))
+            self.save_to_file.setChecked(True)
+
+    def _ensure_log_file(self) -> None:
+        if self.log_file_path is None:
+            default_name = f"UGRemoteTools_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+            self.log_file_path = Path.cwd() / default_name
+            self.file_path_label.setText(str(self.log_file_path))
+
+    def _write_to_file(self, text: str) -> None:
+        if not self.save_to_file.isChecked():
+            return
+        self._ensure_log_file()
+        try:
+            with self.log_file_path.open("a", encoding="utf-8") as f:
+                f.write(text)
+        except Exception as exc:
+            self.text.appendPlainText(f"[LOG FILE ERROR] {exc}")
+            self.save_to_file.setChecked(False)
+
     def append(self, text: str) -> None:
-        self.text.appendPlainText(text.rstrip())
+        clean_text = text.rstrip()
+        self.text.appendPlainText(clean_text)
         self.text.verticalScrollBar().setValue(self.text.verticalScrollBar().maximum())
+        self._write_to_file(clean_text + "\n")
 
     def clear(self) -> None:
         self.text.clear()
+        if self.save_to_file.isChecked():
+            header = (
+                "\n"
+                + "=" * 80
+                + "\n"
+                + f"Новый запуск: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                + "=" * 80
+                + "\n"
+            )
+            self._write_to_file(header)
 
 
 class FeatureDialog(QDialog):
